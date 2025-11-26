@@ -26,6 +26,13 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(length = 300)
+    private String bio;
+
+    private String avatarUrl;
+
+    private String phone;
+
     @Builder.Default
     private Instant createdAt = Instant.now();
 }
