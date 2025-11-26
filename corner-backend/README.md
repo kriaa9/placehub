@@ -106,6 +106,7 @@ See new lists or places added by people you follow.
 - **Security**: Spring Security + JWT
 - **Validation**: Jakarta Bean Validation
 - **Build Tool**: Maven
+- **Web Map Rendering** Leaflet  OpenStreetMap Tiles
 
 ---
 
