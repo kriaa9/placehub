@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
     private final UserRepository userRepository;
+    private final FollowService followService;
 
     public UserProfileResponse getMyProfile() {
         User user = getCurrentUser();
@@ -50,9 +51,10 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // TODO: When follow system is implemented, check if current user follows this
-        // user
-        return buildUserProfileResponse(user, false);
+        User currentUser = getCurrentUser();
+        boolean isFollowing = followService.isFollowing(currentUser.getId(), userId);
+
+        return buildUserProfileResponse(user, isFollowing);
     }
 
     private User getCurrentUser() {
@@ -63,6 +65,9 @@ public class ProfileService {
     }
 
     private UserProfileResponse buildUserProfileResponse(User user, boolean isFollowing) {
+        long followersCount = followService.getFollowerCount(user.getId());
+        long followingCount = followService.getFollowingCount(user.getId());
+
         return UserProfileResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -71,8 +76,8 @@ public class ProfileService {
                 .bio(user.getBio())
                 .avatarUrl(user.getAvatarUrl())
                 .phone(user.getPhone())
-                .followersCount(0) // TODO: Implement when follower system exists
-                .followingCount(0) // TODO: Implement when follower system exists
+                .followersCount((int) followersCount)
+                .followingCount((int) followingCount)
                 .isFollowing(isFollowing)
                 .build();
     }
