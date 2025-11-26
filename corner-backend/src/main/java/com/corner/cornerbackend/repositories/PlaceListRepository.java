@@ -14,4 +14,6 @@ public interface PlaceListRepository extends JpaRepository<PlaceList, Long> {
     List<PlaceList> findByOwnerAndIsPublicTrue(User owner);
 
     List<PlaceList> findByIsPublicTrue();
+
+    List<PlaceList> findByOwnerInAndIsPublicTrueOrderByCreatedAtDesc(List<User> owners);
 }

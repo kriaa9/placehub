@@ -34,6 +34,16 @@ public class PlaceListController {
         return ResponseEntity.ok(placeListService.getUserLists(userId));
     }
 
+    @GetMapping("/discover")
+    public ResponseEntity<List<PlaceListResponse>> getPublicLists() {
+        return ResponseEntity.ok(placeListService.getPublicLists());
+    }
+
+    @GetMapping("/feed")
+    public ResponseEntity<List<PlaceListResponse>> getFeed() {
+        return ResponseEntity.ok(placeListService.getFeed());
+    }
+
     @GetMapping("/{listId}")
     public ResponseEntity<PlaceListResponse> getListById(@PathVariable Long listId) {
         return ResponseEntity.ok(placeListService.getListById(listId));

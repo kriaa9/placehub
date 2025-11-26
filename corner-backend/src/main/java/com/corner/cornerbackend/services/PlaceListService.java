@@ -60,6 +60,29 @@ public class PlaceListService {
                 .collect(Collectors.toList());
     }
 
+    public List<PlaceListResponse> getPublicLists() {
+        return placeListRepository.findByIsPublicTrue().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<PlaceListResponse> getFeed() {
+        User currentUser = getCurrentUser();
+        List<UserSummaryDto> following = followService.getFollowing(currentUser.getId());
+        List<User> followingUsers = following.stream()
+                .map(dto -> userRepository.findById(dto.getId()).orElse(null))
+                .filter(user -> user != null)
+                .collect(Collectors.toList());
+
+        if (followingUsers.isEmpty()) {
+            return List.of();
+        }
+
+        return placeListRepository.findByOwnerInAndIsPublicTrueOrderByCreatedAtDesc(followingUsers).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public PlaceListResponse getListById(Long listId) {
         PlaceList placeList = placeListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("List not found"));
