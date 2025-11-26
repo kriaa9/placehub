@@ -51,7 +51,7 @@ Corner Clone is a **social mapping platform** where users:
 
 ### **5. Places & Map Data**
 
-- Global place management with Google Place IDs
+- Global place management (OpenStreetMap / Leaflet support)
 - Store latitude/longitude for map rendering
 - Support for "AI Save From Anywhere" links
 - Image uploads for saved places
@@ -183,14 +183,14 @@ Search saved places by city, category, vibe tags, or keywords from notes.
 
 ### Places Table
 
-| Column               | Type    | Description    |
-| -------------------- | ------- | -------------- |
-| id                   | BIGINT  | Primary key    |
-| google_place_id      | VARCHAR | Unique ID      |
-| name                 | VARCHAR | Place name     |
-| latitude             | DOUBLE  | Location Lat   |
-| longitude            | DOUBLE  | Location Lng   |
-| original_source_link | VARCHAR | AI Source Link |
+| Column               | Type    | Description              |
+| -------------------- | ------- | ------------------------ |
+| id                   | BIGINT  | Primary key              |
+| external_id          | VARCHAR | Unique External ID (OSM) |
+| name                 | VARCHAR | Place name               |
+| latitude             | DOUBLE  | Location Lat             |
+| longitude            | DOUBLE  | Location Lng             |
+| original_source_link | VARCHAR | AI Source Link           |
 
 ### Saved Places Table
 
