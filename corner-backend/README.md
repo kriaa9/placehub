@@ -42,60 +42,54 @@ Corner Clone is a **social mapping platform** where users:
 - Real-time follower/following counts
 - Integrated with user profiles (`isFollowing` status)
 
+### **4. Curated Lists (Personal Guides)**
+
+- Create themed lists (e.g., "Summer Vibes")
+- Public/Private visibility settings
+- Custom cover images
+- Add places with personal notes and tags
+
+### **5. Places & Map Data**
+
+- Global place management with Google Place IDs
+- Store latitude/longitude for map rendering
+- Support for "AI Save From Anywhere" links
+- Image uploads for saved places
+
+### **6. Discovery & Feed**
+
+- **Discovery**: Browse public lists from the community
+- **Activity Feed**: See new lists from people you follow
+- API endpoints for `/api/lists/discover` and `/api/lists/feed`
+
 ---
 
 ## 🚀 Upcoming Features (Backend Roadmap)
-
-### **4. Curated Lists (Personal Guides)**
-
-Users will create themed lists like "Summer Travel Bucket List" or "Vintage Shops" that contain multiple places with mood and purpose.
-
-### **5. Add & Manage Places**
-
-Places will be added to lists with details: name, category (café, shop, bar, restaurant), location, personal notes describing the vibe.
-
-### **6. AI "Save From Anywhere"**
-
-Paste links from Instagram, TikTok, or Google Maps — AI extracts place name, location, and suggests a category automatically.
 
 ### **7. Social Sharing (Public Links)**
 
 Lists will have unique public URLs that anyone can view without logging in.
 
-### **8. Discover / Explore Community Lists**
-
-Browse public lists created by others to find inspiration based on real people's perspectives, not algorithms.
-
-### **9. Personal Map vs Social Map**
+### **8. Personal Map vs Social Map**
 
 - **Personal Map**: Shows only your saved places (private travel journal)
 - **Social Map**: Overlay pins from followed users, toggle visibility
 
-### **10. Personalized Map of Places**
+### **9. Personalized Map of Places**
 
 All saved locations appear as interactive pins. Filter by specific list or view all at once.
 
-### **11. No Star Ratings – Vibe-Based Expression**
+### **10. No Star Ratings – Vibe-Based Expression**
 
 Use short notes, tags, and emojis (☕ cozy, 🍷 romantic, 🎶 lively) instead of numerical ratings.
 
-### **12. AI-Powered "Match Your Vibe" Suggestions**
+### **11. AI-Powered "Match Your Vibe" Suggestions**
 
 Analyze saved places and tags to recommend locations and lists aligned with your taste.
 
-### **13. Image Uploads for Places**
-
-Upload ambiance shots, food, drinks, or décor to make lists visually rich.
-
-### **14. Advanced Search & Filters**
+### **12. Advanced Search & Filters**
 
 Search saved places by city, category, vibe tags, or keywords from notes.
-
-### **15. Activity Feed**
-
-See new lists or places added by people you follow.
-
----
 
 ## 🛠️ Tech Stack
 
@@ -106,7 +100,7 @@ See new lists or places added by people you follow.
 - **Security**: Spring Security + JWT
 - **Validation**: Jakarta Bean Validation
 - **Build Tool**: Maven
-- **Web Map Rendering** Leaflet  OpenStreetMap Tiles
+- **Web Map Rendering** Leaflet OpenStreetMap Tiles
 
 ---
 
@@ -137,6 +131,17 @@ See new lists or places added by people you follow.
 | GET    | `/api/follow/followers/{userId}` | Get followers list | Yes           |
 | GET    | `/api/follow/following/{userId}` | Get following list | Yes           |
 
+### Lists & Places (`/api/lists`, `/api/places`)
+
+| Method | Endpoint                 | Description                  | Auth Required |
+| ------ | ------------------------ | ---------------------------- | ------------- |
+| GET    | `/api/lists/discover`    | Get public lists (Discovery) | Yes           |
+| GET    | `/api/lists/feed`        | Get activity feed            | Yes           |
+| GET    | `/api/lists/me`          | Get my lists                 | Yes           |
+| POST   | `/api/lists`             | Create a new list            | Yes           |
+| GET    | `/api/lists/{id}`        | Get list details             | Yes           |
+| POST   | `/api/lists/{id}/places` | Add place to list            | Yes           |
+
 ---
 
 ## 🗄️ Database Schema
@@ -164,6 +169,39 @@ See new lists or places added by people you follow.
 | created_at   | TIMESTAMP | Follow date              |
 
 **Primary Key:** Composite `(follower_id, following_id)`
+
+### Place Lists Table
+
+| Column          | Type    | Description      |
+| --------------- | ------- | ---------------- |
+| id              | BIGINT  | Primary key      |
+| owner_id        | BIGINT  | Owner (FK)       |
+| name            | VARCHAR | List name        |
+| description     | TEXT    | List description |
+| cover_image_url | VARCHAR | Cover image      |
+| is_public       | BOOLEAN | Visibility       |
+
+### Places Table
+
+| Column               | Type    | Description    |
+| -------------------- | ------- | -------------- |
+| id                   | BIGINT  | Primary key    |
+| google_place_id      | VARCHAR | Unique ID      |
+| name                 | VARCHAR | Place name     |
+| latitude             | DOUBLE  | Location Lat   |
+| longitude            | DOUBLE  | Location Lng   |
+| original_source_link | VARCHAR | AI Source Link |
+
+### Saved Places Table
+
+| Column        | Type      | Description   |
+| ------------- | --------- | ------------- |
+| id            | BIGINT    | Primary key   |
+| place_list_id | BIGINT    | List (FK)     |
+| place_id      | BIGINT    | Place (FK)    |
+| note          | TEXT      | Personal note |
+| image_url     | VARCHAR   | User photo    |
+| tags          | VARCHAR[] | Vibe tags     |
 
 ---
 
