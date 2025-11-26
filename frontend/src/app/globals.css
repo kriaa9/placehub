@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+@theme {
+  --color-lavender: #E6E6FA;
+  --color-peach: #FFDAB9;
+  --color-mint: #98FF98;
+  --color-sky: #87CEEB;
+  --color-cream: #FFFDD0;
+  --color-charcoal: #36454F;
+  
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Poppins", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-cream text-charcoal font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

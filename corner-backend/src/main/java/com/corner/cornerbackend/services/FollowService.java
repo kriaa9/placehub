@@ -57,7 +57,7 @@ public class FollowService {
                 .build();
     }
 
-    @Transactional
+        @Transactional
     public FollowResponse unfollowUser(Long targetUserId) {
         User currentUser = getCurrentUser();
         User targetUser = userRepository.findById(targetUserId)
