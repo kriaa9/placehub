@@ -38,15 +38,19 @@ export default function SignupPage() {
     }
 
     try {
-      await api.post("/auth/register", {
+      const response = await api.post("/auth/register", {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       })
-      // Auto login or redirect to login
-      router.push("/login")
+      // Store token from signup response
+      if (response.data.accessToken) {
+        localStorage.setItem("token", response.data.accessToken)
+      }
+      // Redirect to profile after successful signup
+      router.push("/profile")
     } catch (err) {
       const error = err as AxiosError<{ message: string }>
       setError(error.response?.data?.message || "Registration failed")

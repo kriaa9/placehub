@@ -24,8 +24,8 @@ export default function LoginPage() {
 
     try {
       const response = await api.post("/auth/login", { email, password })
-      localStorage.setItem("token", response.data.token)
-      router.push("/")
+      localStorage.setItem("token", response.data.accessToken)
+      router.push("/profile")
     } catch (err) {
       const error = err as AxiosError<{ message: string }>
       setError(error.response?.data?.message || "Invalid email or password")
