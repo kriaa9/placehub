@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: corner-backend
+  datasource:
+    url: jdbc:postgresql://ep-empty-river-adspw2bl-pooler.c-2.us-east-1.aws.neon.tech:5432/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_LNv75IsUcODu
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 86400000 # 24 hours
+
+cloudinary:
+  cloud_name: dzv7sdd90
+  api_key: 897229688834855
+  api_secret: dn34YVGduNjmJvaQN8SBwLG1mjQ
