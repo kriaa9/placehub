@@ -22,11 +22,16 @@ interface UserProfile {
   isFollowing: boolean
 }
 
+import { EditProfileModal } from "@/components/features/EditProfileModal"
+
+// ... (imports remain the same)
+
 export default function ProfilePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -56,6 +61,26 @@ export default function ProfilePage() {
       setProfile(response.data)
     } catch (error) {
       console.error("Failed to update avatar:", error)
+    }
+  }
+
+  const handleUpdateSuccess = (updatedProfile: UserProfile) => {
+    setProfile(updatedProfile)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    router.push("/login")
+  }
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.delete("/profile/me")
+      localStorage.removeItem("token")
+      router.push("/signup")
+    } catch (error) {
+      console.error("Failed to delete account:", error)
+      alert("Failed to delete account. Please try again.")
     }
   }
 
@@ -91,6 +116,8 @@ export default function ProfilePage() {
             username={username}
             bio={profile.bio}
             onUploadClick={() => setUploadModalOpen(true)}
+            onEditClick={() => setEditModalOpen(true)}
+            onLogoutClick={handleLogout}
           />
 
           <ProfileStats
@@ -139,6 +166,18 @@ export default function ProfilePage() {
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onUploadSuccess={handleUploadSuccess}
+      />
+
+      <EditProfileModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onUpdateSuccess={handleUpdateSuccess}
+        onDeleteAccount={handleDeleteAccount}
+        initialData={{
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          bio: profile.bio,
+        }}
       />
     </div>
   )

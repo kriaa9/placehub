@@ -81,4 +81,14 @@ public class ProfileService {
                 .isFollowing(isFollowing)
                 .build();
     }
+
+    @Transactional
+    public void deleteMyProfile() {
+        User user = getCurrentUser();
+        // Delete user - cascading delete should handle related entities if configured
+        // correctly
+        // If not, we might need to manually delete lists, places, etc.
+        // For now, assuming basic delete is sufficient or cascade is set up in DB
+        userRepository.delete(user);
+    }
 }

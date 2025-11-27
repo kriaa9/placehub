@@ -30,4 +30,10 @@ public class ProfileController {
     public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long id) {
         return ResponseEntity.ok(profileService.getUserProfile(id));
     }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyProfile() {
+        profileService.deleteMyProfile();
+        return ResponseEntity.noContent().build();
+    }
 }

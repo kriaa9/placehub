@@ -1,8 +1,6 @@
-"use client"
-
 import { Avatar } from "@/components/ui/Avatar"
 import { Button } from "@/components/ui/button"
-import { Camera } from "lucide-react"
+import { Camera, LogOut, Edit2 } from "lucide-react"
 
 interface ProfileHeaderProps {
   avatarUrl?: string
@@ -12,6 +10,7 @@ interface ProfileHeaderProps {
   bio?: string
   onUploadClick: () => void
   onEditClick?: () => void
+  onLogoutClick?: () => void
 }
 
 export function ProfileHeader({
@@ -22,11 +21,22 @@ export function ProfileHeader({
   bio,
   onUploadClick,
   onEditClick,
+  onLogoutClick,
 }: ProfileHeaderProps) {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase()
 
   return (
-    <div className="flex flex-col items-center text-center space-y-4">
+    <div className="flex flex-col items-center text-center space-y-4 relative">
+      {onLogoutClick && (
+        <button
+          onClick={onLogoutClick}
+          className="absolute top-0 right-0 p-2 text-gray-400 hover:text-red-500 transition-colors"
+          title="Log Out"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      )}
+
       <div className="relative group">
         <Avatar
           src={avatarUrl}
@@ -56,7 +66,8 @@ export function ProfileHeader({
       )}
 
       {onEditClick && (
-        <Button onClick={onEditClick} variant="outline">
+        <Button onClick={onEditClick} variant="outline" className="gap-2">
+          <Edit2 className="h-4 w-4" />
           Edit Profile
         </Button>
       )}
