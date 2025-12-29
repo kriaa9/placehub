@@ -1,0 +1,35 @@
+# ========== Backend (Spring Boot) ==========
+backend/target/
+backend/. mvn/
+backend/*. jar
+backend/*. war
+backend/*. class
+
+# IDE
+backend/.idea/
+backend/*. iml
+backend/. vscode/
+
+# Logs
+backend/logs/
+backend/*.log
+
+# ========== Frontend (Angular) ==========
+frontend/node_modules/
+frontend/dist/
+frontend/. angular/
+frontend/. cache/
+
+# IDE
+frontend/.idea/
+frontend/. vscode/
+
+# ========== General ==========
+. DS_Store
+Thumbs.db
+*.env
+*.env.local
+! *. env.example
+
+# Docker
+. docker-data/
