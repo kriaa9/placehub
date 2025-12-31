@@ -4,11 +4,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,9 +26,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * PlaceList Entity - A collection of saved places.
+ * PlaceList Entity - A collection of saved places (like a playlist but for places).
  */
-@Document(collection = "place_lists")
+@Entity
+@Table(name = "place_lists")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,28 +38,40 @@ import lombok.Setter;
 public class PlaceList {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @NotBlank(message = "List name is required")
+    @Column(nullable = false)
     private String name;
 
     private String description;
+
+    @Column(name = "cover_image_url")
     private String coverImageUrl;
 
     // Is this list visible to everyone?
+    @Column(name = "is_public", nullable = false)
     @Builder.Default
     private Boolean isPublic = false;
 
-    // Who owns this list? (User ID)
-    private String ownerId;
+    // Who owns this list?
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
-    // List of saved place IDs in this list
-    @Builder.Default
-    private List<String> savedPlaceIds = new ArrayList<>();
-
-    @CreatedDate
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // ========== Relationships ==========
+
+    // Places saved in this list
+    @OneToMany(mappedBy = "placeList", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<SavedPlace> savedPlaces = new ArrayList<>();
 }

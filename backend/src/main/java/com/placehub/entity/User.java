@@ -5,13 +5,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -23,7 +31,8 @@ import lombok.Setter;
 /**
  * User Entity - Represents a user in the PlaceHub app.
  */
-@Document(collection = "users")
+@Entity
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,24 +41,29 @@ import lombok.Setter;
 public class User implements UserDetails {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @NotBlank(message = "First name is required")
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
     @NotBlank(message = "Last name is required")
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
-    @Indexed(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "Password is required")
+    @Column(nullable = false)
     private String password;
 
     private String bio;
 
+    @Column(name = "avatar_url")
     private String avatarUrl;
 
     private String phone;
@@ -62,29 +76,36 @@ public class User implements UserDetails {
 
     private String address;
 
-    // Optional: User's home place ID
-    private String homePlaceId;
+    // Optional: User's home place
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "home_place_id")
+    private Place homePlace;
 
-    @CreatedDate
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // ========== Relationships (stored as IDs for MongoDB) ==========
+    // ========== Relationships ==========
 
-    // Places created by this user (stored as IDs)
+    // Places created by this user
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     @Builder.Default
-    private List<String> createdPlaceIds = new ArrayList<>();
+    private List<Place> createdPlaces = new ArrayList<>();
 
-    // Place lists owned by this user (stored as IDs)
+    // Place lists owned by this user
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     @Builder.Default
-    private List<String> placeListIds = new ArrayList<>();
+    private List<PlaceList> placeLists = new ArrayList<>();
 
-    // Users this user is following (stored as IDs)
+    // Users this user is following
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
     @Builder.Default
-    private List<String> followingIds = new ArrayList<>();
+    private List<Follow> following = new ArrayList<>();
 
-    // Users following this user (stored as IDs)
+    // Users following this user
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
     @Builder.Default
-    private List<String> followerIds = new ArrayList<>();
+    private List<Follow> followers = new ArrayList<>();
 
     // ========== Helper Methods ==========
 
