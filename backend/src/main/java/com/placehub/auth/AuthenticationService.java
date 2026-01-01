@@ -1,13 +1,23 @@
 package com.placehub.auth;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.placehub.entity.RefreshToken;
 import com.placehub.entity.User;
+import com.placehub.exception.DuplicateEmailException;
+import com.placehub.exception.InvalidCredentialsException;
+import com.placehub.exception.UserNotFoundException;
+import com.placehub.repository.RefreshTokenRepository;
 import com.placehub.repository.UserRepository;
 import com.placehub.security.JwtService;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +28,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
+    private static final int MAX_REFRESH_TOKENS_PER_USER = 5;
+
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -26,14 +39,17 @@ public class AuthenticationService {
     /**
      * Registers a new user.
      *
-     * @param request the registration request
-     * @return the authentication response with JWT token
-     * @throws RuntimeException if email already exists
+     * @param request   the registration request
+     * @param userAgent the User-Agent header
+     * @param ipAddress the client IP address
+     * @return the authentication response with JWT tokens
+     * @throws DuplicateEmailException if email already exists
      */
-    public AuthenticationResponse register(RegisterRequest request) {
+    @Transactional
+    public AuthenticationResponse register(RegisterRequest request, String userAgent, String ipAddress) {
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new DuplicateEmailException("Email already registered");
         }
 
         // Create new user
@@ -45,48 +61,106 @@ public class AuthenticationService {
                 .build();
 
         // Save user to database
-        userRepository.save(user);
+        var savedUser = userRepository.save(user);
 
-        // Generate JWT token
-        var jwtToken = jwtService.generateToken(user);
+        // Generate tokens
+        return generateTokens(savedUser, userAgent, ipAddress);
+    }
+
+    /**
+     * Authenticates a user and generates JWT tokens.
+     *
+     * @param request   the authentication request
+     * @param userAgent the User-Agent header
+     * @param ipAddress the client IP address
+     * @return the authentication response with JWT tokens
+     * @throws UserNotFoundException       if user not found
+     * @throws InvalidCredentialsException if credentials are invalid
+     */
+    @Transactional
+    public AuthenticationResponse authenticate(AuthenticationRequest request, String userAgent, String ipAddress) {
+        // Find user by email
+        var user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + request.getEmail()));
+
+        // Authenticate user
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (BadCredentialsException e) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        // Revoke old refresh tokens if limit exceeded
+        revokeExcessTokens(user);
+
+        // Generate new tokens
+        return generateTokens(user, userAgent, ipAddress);
+    }
+
+    /**
+     * Generates access and refresh tokens for a user.
+     *
+     * @param user      the user
+     * @param userAgent the User-Agent header
+     * @param ipAddress the client IP address
+     * @return the authentication response with tokens
+     */
+    private AuthenticationResponse generateTokens(User user, String userAgent, String ipAddress) {
+        // Generate JWT access token
+        var accessToken = jwtService.generateToken(user);
+
+        // Generate refresh token
+        var refreshTokenStr = jwtService.generateRefreshToken();
+
+        // Calculate expiration time
+        var refreshExpirationMs = jwtService.getRefreshTokenExpiration();
+        var expiresAt = LocalDateTime.now().plusSeconds(refreshExpirationMs / 1000);
+
+        // Save refresh token to database
+        var refreshToken = RefreshToken.builder()
+                .token(refreshTokenStr)
+                .user(user)
+                .userAgent(userAgent)
+                .ipAddress(ipAddress)
+                .expiresAt(expiresAt)
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
 
         // Return response
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshTokenStr)
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getAccessTokenExpiration() / 1000)
+                .userId(user.getId())
                 .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
                 .build();
     }
 
     /**
-     * Authenticates a user and generates JWT token.
+     * Revokes excess refresh tokens if the user has more than the maximum allowed.
      *
-     * @param request the authentication request
-     * @return the authentication response with JWT token
+     * @param user the user
      */
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // Authenticate user
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+    private void revokeExcessTokens(User user) {
+        long activeTokenCount = refreshTokenRepository.countActiveTokensByUser(user);
 
-        // Find user by email
-        var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (activeTokenCount >= MAX_REFRESH_TOKENS_PER_USER) {
+            // Get active tokens ordered by creation date (oldest first)
+            List<RefreshToken> activeTokens = refreshTokenRepository.findActiveTokensByUser(user);
 
-        // Generate JWT token
-        var jwtToken = jwtService.generateToken(user);
-
-        // Return response
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .build();
+            // Revoke the oldest tokens to make room for the new one
+            int tokensToRevoke = (int) (activeTokenCount - MAX_REFRESH_TOKENS_PER_USER + 1);
+            for (int i = activeTokens.size() - 1; i >= activeTokens.size() - tokensToRevoke && i >= 0; i--) {
+                activeTokens.get(i).setRevoked(true);
+                refreshTokenRepository.save(activeTokens.get(i));
+            }
+        }
     }
 }
