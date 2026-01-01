@@ -143,6 +143,67 @@ public class AuthenticationService {
     }
 
     /**
+     * Refreshes an access token using a valid refresh token and rotates it.
+     */
+    @Transactional
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request, String userAgent, String ipAddress) {
+        RefreshToken existing = refreshTokenRepository.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token"));
+
+        if (Boolean.TRUE.equals(existing.getRevoked()) || existing.isExpired()) {
+            throw new InvalidCredentialsException("Invalid or expired refresh token");
+        }
+
+        User user = existing.getUser();
+
+        // Revoke old token and issue new one
+        existing.setRevoked(true);
+        refreshTokenRepository.save(existing);
+
+        var newAccessToken = jwtService.generateToken(user);
+        var newRefreshTokenStr = jwtService.generateRefreshToken();
+        var refreshExpirationMs = jwtService.getRefreshTokenExpiration();
+
+        var newRefresh = RefreshToken.builder()
+                .token(newRefreshTokenStr)
+                .user(user)
+                .userAgent(userAgent)
+                .ipAddress(ipAddress)
+                .expiresAt(LocalDateTime.now().plusSeconds(refreshExpirationMs / 1000))
+                .build();
+
+        refreshTokenRepository.save(newRefresh);
+
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshTokenStr)
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getAccessTokenExpiration() / 1000)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .build();
+    }
+
+    /**
+     * Revokes a single refresh token (logout current session).
+     */
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenRepository.findByToken(request.getRefreshToken()).ifPresent(token -> {
+            token.setRevoked(true);
+            refreshTokenRepository.save(token);
+        });
+    }
+
+    /**
+     * Revokes all refresh tokens for a user (logout all sessions).
+     */
+    @Transactional
+    public void logoutAll(Long userId) {
+        userRepository.findById(userId).ifPresent(refreshTokenRepository::revokeAllTokensByUser);
+    }
+
+    /**
      * Revokes excess refresh tokens if the user has more than the maximum allowed.
      * Uses a single database query for better performance.
      *

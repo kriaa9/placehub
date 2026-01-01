@@ -5,6 +5,7 @@ import com.placehub.security.RateLimitingService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -79,6 +80,37 @@ public class AuthenticationController {
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
         return ResponseEntity.ok("Logout successful. Please delete the token on client side.");
+    }
+
+    /**
+     * Refresh access token using a refresh token.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        String userAgent = servletRequest.getHeader("User-Agent");
+        String ipAddress = getClientIpAddress(servletRequest);
+        return ResponseEntity.ok(authenticationService.refreshToken(request, userAgent, ipAddress));
+    }
+
+    /**
+     * Logout current session by revoking a refresh token.
+     */
+    @PostMapping("/logout-token")
+    public ResponseEntity<Void> logoutToken(@Valid @RequestBody RefreshTokenRequest request) {
+        authenticationService.logout(request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Logout from all sessions by revoking all refresh tokens for the authenticated user.
+     */
+    @PostMapping("/logout-all")
+    public ResponseEntity<Void> logoutAll(@AuthenticationPrincipal com.placehub.entity.User user) {
+        authenticationService.logoutAll(user.getId());
+        return ResponseEntity.ok().build();
     }
 
     /**
