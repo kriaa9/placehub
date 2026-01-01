@@ -1,7 +1,6 @@
 package com.placehub.auth;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.placehub.entity.RefreshToken;
 import com.placehub.entity.User;
@@ -95,7 +94,7 @@ public class AuthenticationService {
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
-        // Revoke old refresh tokens if limit exceeded
+        // Revoke old refresh tokens if limit exceeded (keep only MAX - 1 to make room for new token)
         revokeExcessTokens(user);
 
         // Generate new tokens
@@ -145,6 +144,7 @@ public class AuthenticationService {
 
     /**
      * Revokes excess refresh tokens if the user has more than the maximum allowed.
+     * Uses a single database query for better performance.
      *
      * @param user the user
      */
@@ -152,15 +152,9 @@ public class AuthenticationService {
         long activeTokenCount = refreshTokenRepository.countActiveTokensByUser(user);
 
         if (activeTokenCount >= MAX_REFRESH_TOKENS_PER_USER) {
-            // Get active tokens ordered by creation date (oldest first)
-            List<RefreshToken> activeTokens = refreshTokenRepository.findActiveTokensByUser(user);
-
-            // Revoke the oldest tokens to make room for the new one
-            int tokensToRevoke = (int) (activeTokenCount - MAX_REFRESH_TOKENS_PER_USER + 1);
-            for (int i = activeTokens.size() - 1; i >= activeTokens.size() - tokensToRevoke && i >= 0; i--) {
-                activeTokens.get(i).setRevoked(true);
-                refreshTokenRepository.save(activeTokens.get(i));
-            }
+            // Revoke oldest tokens in a single query, keeping only (MAX - 1) newest tokens
+            // to make room for the new token about to be created
+            refreshTokenRepository.revokeOldestTokens(user, MAX_REFRESH_TOKENS_PER_USER - 1);
         }
     }
 }

@@ -54,6 +54,17 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     void revokeAllTokensByUser(@Param("user") User user);
 
     /**
+     * Revoke oldest active tokens for a user, keeping a specified number of newest tokens.
+     *
+     * @param user         the user
+     * @param tokensToKeep the number of newest tokens to keep active
+     */
+    @Modifying
+    @Query("UPDATE RefreshToken rt SET rt.revoked = true WHERE rt.user = :user AND rt.revoked = false AND rt.id NOT IN " +
+           "(SELECT rt2.id FROM RefreshToken rt2 WHERE rt2.user = :user AND rt2.revoked = false ORDER BY rt2.createdAt DESC LIMIT :tokensToKeep)")
+    void revokeOldestTokens(@Param("user") User user, @Param("tokensToKeep") int tokensToKeep);
+
+    /**
      * Delete expired tokens.
      *
      * @return number of deleted tokens
