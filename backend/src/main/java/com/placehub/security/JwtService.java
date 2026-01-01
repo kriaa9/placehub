@@ -3,6 +3,7 @@ package com.placehub.security;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
@@ -29,6 +30,9 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     /**
      * Extracts the username (subject) from the JWT token.
      *
@@ -53,7 +57,7 @@ public class JwtService {
     }
 
     /**
-     * Generates a JWT token for the given user.
+     * Generates a JWT access token for the given user.
      *
      * @param userDetails the user details
      * @return the generated JWT token
@@ -63,7 +67,7 @@ public class JwtService {
     }
 
     /**
-     * Generates a JWT token with extra claims for the given user.
+     * Generates a JWT access token with extra claims for the given user.
      *
      * @param extraClaims additional claims to include in the token
      * @param userDetails the user details
@@ -71,6 +75,33 @@ public class JwtService {
      */
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    /**
+     * Generates a refresh token string (UUID).
+     *
+     * @return the generated refresh token
+     */
+    public String generateRefreshToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Gets the access token expiration time in milliseconds.
+     *
+     * @return expiration time in milliseconds
+     */
+    public long getAccessTokenExpiration() {
+        return jwtExpiration;
+    }
+
+    /**
+     * Gets the refresh token expiration time in milliseconds.
+     *
+     * @return expiration time in milliseconds
+     */
+    public long getRefreshTokenExpiration() {
+        return refreshExpiration;
     }
 
     /**
