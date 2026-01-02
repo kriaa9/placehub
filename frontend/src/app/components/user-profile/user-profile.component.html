@@ -1,0 +1,117 @@
+<div class="container py-4">
+  @if (isLoading) {
+    <div class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  } @else if (errorMessage) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+      <a routerLink="/search" class="alert-link ms-2">Search for users</a>
+    </div>
+  } @else if (user) {
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <!-- Profile Header -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+              <div class="d-flex align-items-center">
+                <div class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                  {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+                </div>
+                <div>
+                  <h3 class="mb-0">{{ user.firstName }} {{ user.lastName }}</h3>
+                  @if (user.city || user.country) {
+                    <p class="text-muted mb-0">
+                      <i class="bi bi-geo-alt"></i>
+                      {{ user.city }}{{ user.city && user.country ? ', ' : '' }}{{ user.country }}
+                    </p>
+                  }
+                </div>
+              </div>
+              <button
+                class="btn"
+                [class.btn-primary]="!isFollowing"
+                [class.btn-outline-primary]="isFollowing"
+                (click)="toggleFollow()"
+                [disabled]="isFollowLoading"
+              >
+                @if (isFollowLoading) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                } @else if (isFollowing) {
+                  <i class="bi bi-person-check"></i> Following
+                } @else {
+                  <i class="bi bi-person-plus"></i> Follow
+                }
+              </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="row text-center border-top border-bottom py-3 mb-4">
+              <div class="col-4">
+                <h4 class="mb-0">{{ user.placesCount || 0 }}</h4>
+                <small class="text-muted">Places</small>
+              </div>
+              <div class="col-4">
+                <a [routerLink]="['/user', user.id, 'followers']" class="text-decoration-none">
+                  <h4 class="mb-0">{{ followersCount }}</h4>
+                  <small class="text-muted">Followers</small>
+                </a>
+              </div>
+              <div class="col-4">
+                <a [routerLink]="['/user', user.id, 'following']" class="text-decoration-none">
+                  <h4 class="mb-0">{{ followingCount }}</h4>
+                  <small class="text-muted">Following</small>
+                </a>
+              </div>
+            </div>
+
+            <!-- Bio -->
+            @if (user.bio) {
+              <div class="mb-4">
+                <h6 class="text-muted">About</h6>
+                <p>{{ user.bio }}</p>
+              </div>
+            }
+
+            <!-- Social Links -->
+            @if (user.instagram || user.facebook || user.linkedin || user.tiktok) {
+              <div class="mb-4">
+                <h6 class="text-muted">Social Media</h6>
+                <div class="d-flex gap-3">
+                  @if (user.instagram) {
+                    <a [href]="user.instagram" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-instagram fs-4"></i>
+                    </a>
+                  }
+                  @if (user.facebook) {
+                    <a [href]="user.facebook" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-facebook fs-4"></i>
+                    </a>
+                  }
+                  @if (user.linkedin) {
+                    <a [href]="user.linkedin" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-linkedin fs-4"></i>
+                    </a>
+                  }
+                  @if (user.tiktok) {
+                    <a [href]="user.tiktok" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-tiktok fs-4"></i>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Member Since -->
+            <div class="text-muted small">
+              <i class="bi bi-calendar"></i> Member since {{ user.createdAt | date:'mediumDate' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

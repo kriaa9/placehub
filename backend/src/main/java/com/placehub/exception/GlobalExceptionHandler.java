@@ -71,36 +71,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles TooManyRequestsException.
-     */
-    @ExceptionHandler(TooManyRequestsException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequestsException(TooManyRequestsException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.TOO_MANY_REQUESTS.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    /**
      * Handles validation exceptions.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, Object> response = new HashMap<>();
         Map<String, String> errors = new HashMap<>();
-        
+
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
         response.put("timestamp", LocalDateTime.now());
-        
+
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 

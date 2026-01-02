@@ -6,12 +6,15 @@ import java.util.Collection;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +42,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class User implements UserDetails {
+
+    public enum AccountStatus {
+        ACTIVE,
+        DELETED,
+        SUSPENDED
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -76,6 +85,25 @@ public class User implements UserDetails {
 
     private String address;
 
+    // Home location coordinates
+    @Column(name = "home_latitude")
+    private Double homeLatitude;
+
+    @Column(name = "home_longitude")
+    private Double homeLongitude;
+
+    // Social media links
+    private String instagram;
+    private String facebook;
+    private String linkedin;
+    private String tiktok;
+
+    // Account status for soft delete
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status")
+    @Builder.Default
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
     // Optional: User's home place
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_place_id")
@@ -84,6 +112,10 @@ public class User implements UserDetails {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // ========== Relationships ==========
 

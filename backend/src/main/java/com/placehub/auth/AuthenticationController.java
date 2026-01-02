@@ -1,8 +1,5 @@
 package com.placehub.auth;
 
-import com.placehub.exception.TooManyRequestsException;
-import com.placehub.security.RateLimitingService;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
-    private final RateLimitingService rateLimitingService;
 
     /**
      * Registers a new user.
@@ -51,21 +47,14 @@ public class AuthenticationController {
      * @param request        the authentication request
      * @param servletRequest the HTTP servlet request for extracting device info
      * @return the authentication response with JWT tokens
-     * @throws TooManyRequestsException if rate limit is exceeded
      */
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @Valid @RequestBody AuthenticationRequest request,
             HttpServletRequest servletRequest
     ) {
-        String ipAddress = getClientIpAddress(servletRequest);
-
-        // Check rate limiting
-        if (!rateLimitingService.isLoginAllowed(ipAddress)) {
-            throw new TooManyRequestsException("Too many login attempts. Please try again in 15 minutes.");
-        }
-
         String userAgent = servletRequest.getHeader("User-Agent");
+        String ipAddress = getClientIpAddress(servletRequest);
 
         AuthenticationResponse response = authenticationService.authenticate(request, userAgent, ipAddress);
         return ResponseEntity.ok(response);

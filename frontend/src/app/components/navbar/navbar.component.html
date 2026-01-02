@@ -1,0 +1,81 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" routerLink="/">
+      <i class="bi bi-geo-alt-fill"></i> PlaceHub
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      (click)="toggleMenu()"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" [class.show]="!isMenuCollapsed" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        @if (isLoggedIn) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/search" routerLinkActive="active">
+              <i class="bi bi-search"></i> Search Users
+            </a>
+          </li>
+        }
+      </ul>
+
+      <ul class="navbar-nav">
+        @if (isLoggedIn) {
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="bi bi-person-circle"></i>
+              {{ currentUser?.firstName }} {{ currentUser?.lastName }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item" routerLink="/profile">
+                  <i class="bi bi-person"></i> My Profile
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" routerLink="/profile/followers">
+                  <i class="bi bi-people"></i> Followers
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" routerLink="/profile/following">
+                  <i class="bi bi-person-plus"></i> Following
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" (click)="logout()" style="cursor: pointer;">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+              </li>
+            </ul>
+          </li>
+        } @else {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/login" routerLinkActive="active">
+              <i class="bi bi-box-arrow-in-right"></i> Login
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/register" routerLinkActive="active">
+              <i class="bi bi-person-plus"></i> Register
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+</nav>
